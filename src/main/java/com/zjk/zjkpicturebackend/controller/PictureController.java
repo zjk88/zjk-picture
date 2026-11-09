@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 
 @Slf4j
@@ -145,6 +146,12 @@ public class PictureController {
         // 查询数据库
         Picture picture = pictureService.getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.NOT_FOUND_ERROR);
+        if (!Objects.equals(picture.getReviewStatus(), PictureReviewStatusEnum.PASS.getValue())) {
+            User loginUser = userService.getLoginUserPermitNull(request);
+            boolean canPreview = loginUser != null
+                    && (Objects.equals(picture.getUserId(), loginUser.getId()) || userService.isAdmin(loginUser));
+            ThrowUtils.throwIf(!canPreview, ErrorCode.NOT_FOUND_ERROR);
+        }
         // 获取封装类
         return ResultUtils.success(pictureService.getPictureVO(picture, request));
     }
@@ -173,8 +180,11 @@ public class PictureController {
         long size = pictureQueryRequest.getPageSize();
         // 限制爬虫
         ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-        // 普通用户默认只能看到审核通过的数据
-        pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        // 普通用户（含未登录访客）默认只能看到审核通过的数据，管理员可以查看全部
+        User loginUser = userService.getLoginUserPermitNull(request);
+        if (!userService.isAdmin(loginUser)) {
+            pictureQueryRequest.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+        }
         // 查询数据库
         Page<Picture> picturePage = pictureService.page(new Page<>(current, size),
                 pictureService.getQueryWrapper(pictureQueryRequest));

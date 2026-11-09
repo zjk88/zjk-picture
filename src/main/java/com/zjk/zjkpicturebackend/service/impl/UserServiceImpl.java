@@ -181,6 +181,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    public User getLoginUserPermitNull(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        // 判断是否已经登录
+        Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
+        User currentUser = (User) userObj;
+        if (currentUser == null || currentUser.getId() == null) {
+            return null;
+        }
+        // 从数据库中查询最新的用户信息（角色可能已被管理员修改）
+        return this.getById(currentUser.getId());
+    }
+
+    @Override
     public boolean userLogout(HttpServletRequest request) {
         // 判断是否已经登录
         Object userObj = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);

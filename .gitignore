@@ -1,5 +1,6 @@
 ### Custom ###
-src/main/resources/application-local.yml
+application-local.yml
+application-local.yaml
 
 HELP.md
 target/

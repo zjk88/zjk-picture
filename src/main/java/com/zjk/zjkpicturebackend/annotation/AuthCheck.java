@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
 public @interface AuthCheck {
 
     /**
-     * 必须具有某个角色
+     * 所需角色，留空时仅要求登录。
      */
     String mustRole() default "";
 }
